@@ -1,0 +1,35 @@
+appliances:
+- instance: 1
+  meters: [2]
+  original_name: air1
+  type: air conditioner
+- instance: 1
+  meters: [3]
+  original_name: drye1
+  type: spin dryer
+- instance: 1
+  meters: [4]
+  original_name: furnace1
+  type: electric furnace
+- instance: 1
+  meters: [5]
+  original_name: oven1
+  type: oven
+- instance: 1
+  meters: [6]
+  original_name: poolpump1
+  type: electric swimming pool heater
+- instance: 1
+  meters: [7]
+  original_name: refrigerator1
+  type: fridge
+elec_meters:
+  1: {device_model: eGauge, site_meter: true}
+  2: {device_model: eGauge, submeter_of: 0}
+  3: {device_model: eGauge, submeter_of: 0}
+  4: {device_model: eGauge, submeter_of: 0}
+  5: {device_model: eGauge, submeter_of: 0}
+  6: {device_model: eGauge, submeter_of: 0}
+  7: {device_model: eGauge, submeter_of: 0}
+instance: 59
+original_name: 59
