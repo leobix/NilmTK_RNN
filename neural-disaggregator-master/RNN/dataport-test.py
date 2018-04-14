@@ -1,0 +1,67 @@
+from __future__ import print_function, division
+import time
+
+from matplotlib import rcParams
+import matplotlib.pyplot as plt
+
+from nilmtk import DataSet, TimeFrame, MeterGroup, HDFDataStore
+from rnndisaggregator import RNNDisaggregator
+import metrics
+
+print("========== OPEN DATASETS ============")
+train = DataSet('/Users/leobix/Desktop/testdataport5.h5')
+test = DataSet('/Users/leobix/Desktop/testdataport5.h5')
+
+train.set_window(start="1-1-2017", end="2-1-2017")
+test.set_window(start="4-1-2017", end="5-1-2017")
+print(train)
+train_building = 59
+test_building = 59
+sample_period = 6
+
+meter_key = 'oven'
+train_elec = train.buildings[train_building].elec
+test_elec = test.buildings[test_building].elec
+print(train_elec.submeters())
+
+
+
+
+train_meter = train_elec.submeters()[meter_key]
+train_mains = train_elec.mains()
+test_mains = test_elec.mains()
+rnn = RNNDisaggregator()
+
+
+start = time.time()
+print("========== TRAIN ============")
+epochs = 0
+for i in range(1):
+    print("CHECKPOINT {}".format(epochs))
+    rnn.train(train_mains, train_meter, epochs=5, sample_period=sample_period)
+    epochs += 5
+    rnn.export_model("UKDALE-RNN-h{}-{}-{}epochs.h5".format(train_building,
+                                                        meter_key,
+                                                        epochs))
+end = time.time()
+print("Train =", end-start, "seconds.")
+
+
+print("========== DISAGGREGATE ============")
+disag_filename = "disagtest4.h5"
+output = HDFDataStore(disag_filename, 'w')
+rnn.disaggregate(test_mains, output, train_meter, sample_period=sample_period)
+output.close()
+
+print("========== RESULTS ============")
+#result = DataSet("/Users/leobix/Documents/Année_scolaire_17_18/Dev_Log_NILM/neural-disaggregator-master/RNN/disagtest2.h5")
+result = DataSet(disag_filename)
+res_elec = result.buildings[test_building].elec
+rpaf = metrics.recall_precision_accuracy_f1(res_elec[meter_key], test_elec[meter_key])
+print("============ Recall: {}".format(rpaf[0]))
+print("============ Precision: {}".format(rpaf[1]))
+print("============ Accuracy: {}".format(rpaf[2]))
+print("============ F1 Score: {}".format(rpaf[3]))
+
+print("============ Relative error in total energy: {}".format(metrics.relative_error_total_energy(res_elec[meter_key], test_elec[meter_key])))
+print("============ Mean absolute error(in Watts): {}".format(metrics.mean_absolute_error(res_elec[meter_key], test_elec[meter_key])))
